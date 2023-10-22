@@ -8,22 +8,11 @@ use shuttle_secrets::SecretStore;
 use sqlx::PgPool;
 
 use crate::commands::ping::*;
+use crate::commands::register::*;
 
 pub struct Data {} // User data, which is stored and accessible in all command invocations
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 pub type Context<'a> = poise::Context<'a, Data, Error>;
-
-#[poise::command(slash_command, prefix_command)]
-async fn register(ctx: Context<'_>) -> Result<(), Error> {
-    poise::builtins::register_application_commands_buttons(ctx).await?;
-    Ok(())
-}
-
-#[poise::command(slash_command)]
-async fn hello(ctx: Context<'_>) -> Result<(), Error> {
-    ctx.say("world!").await?;
-    Ok(())
-}
 
 #[shuttle_runtime::main]
 async fn poise(
@@ -45,7 +34,7 @@ async fn poise(
             event_handler: |_ctx, event, _framework, _data| {
                 Box::pin(event_handler(_ctx, event, _framework))
             },
-            commands: vec![hello(), ping(), register()],
+            commands: vec![ping(), register()],
             ..Default::default()
         })
         .token(discord_token)
