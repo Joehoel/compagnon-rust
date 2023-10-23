@@ -4,7 +4,7 @@ use crate::{Context, Error};
 #[poise::command(slash_command)]
 pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
     let message = ctx.reply("Pong!").await?;
-    
+
     let timestamp = message.message().await?.timestamp.timestamp_millis();
     let other_timestamp = ctx.created_at().timestamp_millis();
 

@@ -91,5 +91,4 @@ async fn event_handler(
 }
 
 fn on_message(ctx: &serenity::Context, message: &Message) {
-    println!("Message: {}", message.content);
 }

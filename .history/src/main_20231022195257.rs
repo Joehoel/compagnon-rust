@@ -1,7 +1,6 @@
 mod commands;
 
 use anyhow::Context as _;
-use poise::serenity_prelude::Message;
 use poise::{serenity_prelude as serenity, Event};
 use rustrict::CensorStr;
 use shuttle_poise::ShuttlePoise;
@@ -23,12 +22,12 @@ struct User {
     pub username: String,
 }
 
-async fn add_user(pool: PgPool, username: String) -> Result<User, Error> {
+async fn add_user(poo, username: String) -> Result<User, Error> {
     println!("Adding user {}", username);
 
     let user = sqlx::query_as::<_, User>("INSERT INTO users (username) VALUES ($1) RETURNING id")
         .bind(username)
-        .fetch_one(&pool)
+        .fetch_one(&state.pool)
         .await
         .expect("Failed to add user");
 
@@ -44,6 +43,12 @@ async fn poise(
         .run(&pool)
         .await
         .map_err(shuttle_runtime::CustomError::new)?;
+
+    let user = add_user(Data { pool: pool.clone() }, "test".to_string())
+        .await
+        .expect("Failed to add user");
+
+    println!("Added user {}", user.username);
 
     // Get the discord token set in `Secrets.toml`
     let discord_token = secret_store
@@ -84,12 +89,15 @@ async fn event_handler(
         Event::Ready { data_about_bot } => {
             println!("Logged in as {}", data_about_bot.user.name);
         }
-        Event::Message { new_message } => on_message(ctx, new_message),
+        Event::Message { new_message } => {
+            if new_message.content.is_inappropriate() {
+                new_message
+                    .reply(ctx, "Ga je mond wassen! 🧼")
+                    .await
+                    .expect("Failed to reply to message");
+            }
+        }
         _ => {}
     }
     Ok(())
-}
-
-fn on_message(ctx: &serenity::Context, message: &Message) {
-    println!("Message: {}", message.content);
 }

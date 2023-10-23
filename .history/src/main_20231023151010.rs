@@ -82,6 +82,7 @@ async fn event_handler(
 ) -> Result<(), Error> {
     match event {
         Event::Ready { data_about_bot } => {
+            data_about_bot.
             println!("Logged in as {}", data_about_bot.user.name);
         }
         Event::Message { new_message } => on_message(ctx, new_message),

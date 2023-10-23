@@ -81,7 +81,7 @@ async fn event_handler(
     _framework: poise::FrameworkContext<'_, Data, Error>,
 ) -> Result<(), Error> {
     match event {
-        Event::Ready { data_about_bot } => {
+        Event::Ready { test } => {
             println!("Logged in as {}", data_about_bot.user.name);
         }
         Event::Message { new_message } => on_message(ctx, new_message),

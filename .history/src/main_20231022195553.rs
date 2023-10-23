@@ -76,7 +76,7 @@ async fn poise(
 }
 
 async fn event_handler(
-    ctx: &serenity::Context,
+    _ctx: &serenity::Context,
     event: &Event<'_>,
     _framework: poise::FrameworkContext<'_, Data, Error>,
 ) -> Result<(), Error> {
@@ -84,12 +84,12 @@ async fn event_handler(
         Event::Ready { data_about_bot } => {
             println!("Logged in as {}", data_about_bot.user.name);
         }
-        Event::Message { new_message } => on_message(ctx, new_message),
+        Event::Message { new_message } => on_message(new_message),
         _ => {}
     }
     Ok(())
 }
 
-fn on_message(ctx: &serenity::Context, message: &Message) {
+fn on_message(ctx: message: &Message) {
     println!("Message: {}", message.content);
 }

@@ -1,7 +1,6 @@
 mod commands;
 
 use anyhow::Context as _;
-use poise::serenity_prelude::Message;
 use poise::{serenity_prelude as serenity, Event};
 use rustrict::CensorStr;
 use shuttle_poise::ShuttlePoise;
@@ -11,28 +10,17 @@ use sqlx::PgPool;
 use crate::commands::ping::*;
 use crate::commands::register::*;
 
-#[derive(Clone)]
-pub struct Data {
-    pub pool: PgPool,
-}
+pub struct Data {} // User data, which is stored and accessible in all command invocations
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 pub type Context<'a> = poise::Context<'a, Data, Error>;
 
-#[derive(sqlx::FromRow)]
-struct User {
-    pub username: String,
-}
-
-async fn add_user(pool: PgPool, username: String) -> Result<User, Error> {
-    println!("Adding user {}", username);
-
-    let user = sqlx::query_as::<_, User>("INSERT INTO users (username) VALUES ($1) RETURNING id")
-        .bind(username)
-        .fetch_one(&pool)
-        .await
-        .expect("Failed to add user");
-
-    Ok(user)
+async fn add_user(pool: &PgPool, username: String) {
+    let rec = sqlx::query(
+        "INSERT INTO users (username)
+        VALUES ($1)
+        ON CONFLICT (username) DO NOTHING",
+    )
+    .bind(username);
 }
 
 #[shuttle_runtime::main]
@@ -65,7 +53,7 @@ async fn poise(
         .setup(|ctx, _ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(Data { pool })
+                Ok(Data {})
             })
         })
         .build()
@@ -84,12 +72,15 @@ async fn event_handler(
         Event::Ready { data_about_bot } => {
             println!("Logged in as {}", data_about_bot.user.name);
         }
-        Event::Message { new_message } => on_message(ctx, new_message),
+        Event::Message { new_message } => {
+            if new_message.content.is_inappropriate() {
+                new_message
+                    .reply(ctx, "Ga je mond wassen! 🧼")
+                    .await
+                    .expect("Failed to reply to message");
+            }
+        }
         _ => {}
     }
     Ok(())
-}
-
-fn on_message(ctx: &serenity::Context, message: &Message) {
-    println!("Message: {}", message.content);
 }
